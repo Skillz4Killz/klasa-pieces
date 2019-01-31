@@ -7,6 +7,7 @@ const webhookID = '';
 const webhookToken = '';
 // How long to awaitMessages in Milliseconds to get the translation
 const time = 120000;
+const key = 'key';
 
 const exampleTranslationEmbed = new MessageEmbed()
   .setColor('RANDOM')
@@ -18,9 +19,9 @@ const exampleTranslationEmbed = new MessageEmbed()
       '',
       util.codeBlock(
         'js',
-        (key) => `${key} has been ${enabled ? 'enabled' : 'disabled'}.`
+        "`${key} has been ${enabled ? 'enabled' : 'disabled'}.`" + ' '
       ),
-      '`',
+      '',
       'The above should be translated as the following:',
       '`${key} ha sido ${enabled ? "habilitado" : "deshabilitado"}.`',
       '',
@@ -68,19 +69,29 @@ module.exports = class extends Command {
             'Only the GREEN color text should be translated the rest should be left the same.'
           )
           .setDescription(util.codeBlock('js', stringToTranslate + ' '))
-          .setFooter(`Listening for translation for ${time}`)
+          .setFooter(`Listening for translation for ${time / 1000} seconds`)
       );
       // Ask the user for the translation
       const translation = await message.channel.awaitMessages(
         (m) => m.author.id === message.author.id,
         { max: 1, time, errors: ['time'] }
       );
+
+      const fullValue = `${key}: ${value.substring(0, funcIndex)} ${
+        translation.first().content
+      }`;
       // Create the message that will be sent to the devs/mods of the bot
       const messageToSend = `ar-Ar Translated By ${message.author.tag} ID: ${
         message.author.id
-      }\n\n${util.codeBlock('js', `${key}: ${value.substring(0, funcIndex)} ${
-        translation.first().content
-      }`)};
+      }\n\n${util.codeBlock('js', fullValue + ' ')}`;
+
+      const test = `{
+        languageKey: 'ar-Ar',
+        authorTag: ${message.author.tag},
+        authorID: ${message.author.id},
+        key: ${key},
+        translation: ${fullValue},
+      }`;
 
       // SIMPLE SMALL BOTS: Send the translation to be reviewed to the channel
       if (translationChannel) {
@@ -101,7 +112,19 @@ module.exports = class extends Command {
       (await message.channel.messages.fetch(messageID).catch(() => null));
     if (!translationMessage) return null;
 
-    // TODO: add this message to language
+    // Convert the translationMessage into a proper JSON
+    const json = JSON.parse(translationMessage.content);
+
+    // Check if the language already has a document and update it with this key and value OR create the language file if it doesnt exist with the key and value provided.
+    const languageFile = await this.client.providers.default.get(
+      'translations',
+      json.languageKey
+    );
+    await this.client.providers.default[languageFile ? 'update' : 'create'](
+      'translations',
+      json.languageKey,
+      { [json.key]: json.translation }
+    );
 
     // Reloads all languages to be safe and automatically update the live languages
     await this.client.commands.get('reload').run(message, ['languages']);
@@ -110,6 +133,24 @@ module.exports = class extends Command {
     await translationMessage.delete();
     await message.delete();
 
-    //
+    const translator =
+      this.client.users.get(json.authorID) ||
+      (await this.client.users.fetch(json.authorID).catch(() => null));
+    if (!translator) return null;
+
+    return translator
+      .send(
+        `The translation you sent has been added to the bot. THANK YOU!\n\n${
+          json.translation
+        }`
+      )
+      .catch(() => null);
+  }
+
+  async init() {
+    // If there is no translation table then create it.
+    const translationTable = this.client.providers.default.get('translations');
+    if (!translationTable)
+      this.client.providers.default.createTable('translations');
   }
 };
