@@ -20,7 +20,7 @@ const exampleTranslationEmbed = new MessageEmbed()
         'js',
         (key) => `${key} has been ${enabled ? 'enabled' : 'disabled'}.`
       ),
-      '',
+      '`',
       'The above should be translated as the following:',
       '`${key} ha sido ${enabled ? "habilitado" : "deshabilitado"}.`',
       '',
@@ -76,11 +76,11 @@ module.exports = class extends Command {
         { max: 1, time, errors: ['time'] }
       );
       // Create the message that will be sent to the devs/mods of the bot
-      const messageToSend = `${languageName} Translated By ${
-        message.author.tag
-      } ID: ${message.author.id}\n\n${key}: ${value.substring(0, funcIndex)} ${
+      const messageToSend = `ar-Ar Translated By ${message.author.tag} ID: ${
+        message.author.id
+      }\n\n${util.codeBlock('js', `${key}: ${value.substring(0, funcIndex)} ${
         translation.first().content
-      }`;
+      }`)};
 
       // SIMPLE SMALL BOTS: Send the translation to be reviewed to the channel
       if (translationChannel) {
@@ -93,5 +93,23 @@ module.exports = class extends Command {
         await webhook.send({ embeds });
       }
     }
+  }
+
+  async accept(message, [messageID]) {
+    const translationMessage =
+      message.channel.messages.get(messageID) ||
+      (await message.channel.messages.fetch(messageID).catch(() => null));
+    if (!translationMessage) return null;
+
+    // TODO: add this message to language
+
+    // Reloads all languages to be safe and automatically update the live languages
+    await this.client.commands.get('reload').run(message, ['languages']);
+
+    // Delete the translation message and the command to keep the channel clean
+    await translationMessage.delete();
+    await message.delete();
+
+    //
   }
 };
