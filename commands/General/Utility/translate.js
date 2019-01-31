@@ -45,9 +45,16 @@ module.exports = class extends Command {
 
     // Show example translation
     await message.channel.send(exampleTranslationEmbed);
+    const languageFile = await this.client.providers.default.get(
+      'translations',
+      languageName
+    );
 
     for (const key of keys) {
-      // TODO: skip if the key is already translated in the selected language with languageName.
+      // Skip if the key is already translated in the selected language with languageName.
+      // TODO: allow bot devs/mods/editors to override this
+      if (languageFile && languageFile[key]) continue;
+
       const isAlreadyTranslated = false;
       if (isAlreadyTranslated) continue;
       // Get the value of the key to be translated
@@ -104,6 +111,7 @@ module.exports = class extends Command {
   }
 
   async accept(message, [messageID]) {
+    // TODO: check to make sure the user is a bot dev/mod/editor etc..
     const translationMessage =
       message.channel.messages.get(messageID) ||
       (await message.channel.messages.fetch(messageID).catch(() => null));
