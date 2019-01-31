@@ -81,11 +81,11 @@ module.exports = class extends Command {
       }`;
       // Create the message that will be sent to the devs/mods of the bot
       const messageToSend = `{
-        languageKey: 'ar-Ar',
-        authorTag: ${message.author.tag},
-        authorID: ${message.author.id},
-        key: ${key},
-        translation: ${fullValue},
+        "languageKey": "${languageName}",
+        "authorTag": "${message.author.tag}",
+        "authorID": "${message.author.id}",
+        "key": "${key}",
+        "translation": "${fullValue}",
       }`;
 
       // SIMPLE SMALL BOTS: Send the translation to be reviewed to the channel
@@ -97,9 +97,9 @@ module.exports = class extends Command {
       else {
         const webhook = new WebhookClient(webhookID, webhookToken);
         await webhook.send({ embeds });
-			}
+      }
 
-			await translation.delete();
+      await translation.delete();
     }
   }
 
