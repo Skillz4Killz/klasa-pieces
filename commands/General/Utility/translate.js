@@ -80,11 +80,7 @@ module.exports = class extends Command {
         translation.first().content
       }`;
       // Create the message that will be sent to the devs/mods of the bot
-      const messageToSend = `ar-Ar Translated By ${message.author.tag} ID: ${
-        message.author.id
-      }\n\n${util.codeBlock('js', fullValue + ' ')}`;
-
-      const test = `{
+      const messageToSend = `{
         languageKey: 'ar-Ar',
         authorTag: ${message.author.tag},
         authorID: ${message.author.id},
@@ -101,7 +97,9 @@ module.exports = class extends Command {
       else {
         const webhook = new WebhookClient(webhookID, webhookToken);
         await webhook.send({ embeds });
-      }
+			}
+
+			await translation.delete();
     }
   }
 
