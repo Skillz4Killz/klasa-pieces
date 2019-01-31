@@ -7,7 +7,6 @@ const webhookID = '';
 const webhookToken = '';
 // How long to awaitMessages in Milliseconds to get the translation
 const time = 120000;
-const key = 'key';
 
 const exampleTranslationEmbed = new MessageEmbed()
   .setColor('RANDOM')
